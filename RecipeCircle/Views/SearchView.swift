@@ -3,39 +3,74 @@ import CoreData
 
 struct SearchView: View {
     @Environment(\.managedObjectContext) private var viewContext
-    @StateObject private var viewModel: RecipeViewModel
-    @State private var searchText = ""
-    @State private var searchResults: [Recipe] = []
-    @State private var isSearching = false
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \Recipe.dateCreated, ascending: false)],
+        animation: .default)
+    private var recipes: FetchedResults<Recipe>
     
-    init() {
-        _viewModel = StateObject(wrappedValue: RecipeViewModel(context: PersistenceController.shared.container.viewContext))
+    @State private var searchText = ""
+    @State private var selectedCategory = "All"
+    @State private var selectedDifficulty = "All"
+    @State private var sortOption = RecipeViewModel.SortOption.dateCreated
+    
+    var searchResults: [Recipe] {
+        var result = Array(recipes)
+        
+        // Apply search filter
+        if !searchText.isEmpty {
+            result = result.filter { recipe in
+                (recipe.title?.localizedCaseInsensitiveContains(searchText) ?? false) ||
+                (recipe.ingredients?.localizedCaseInsensitiveContains(searchText) ?? false) ||
+                (recipe.instructions?.localizedCaseInsensitiveContains(searchText) ?? false)
+            }
+        }
+        
+        // Apply category filter
+        if selectedCategory != "All" {
+            result = result.filter { $0.category == selectedCategory }
+        }
+        
+        // Apply difficulty filter
+        if selectedDifficulty != "All" {
+            result = result.filter { $0.difficulty == selectedDifficulty }
+        }
+        
+        // Apply sorting
+        switch sortOption {
+        case .dateCreated:
+            result.sort { ($0.dateCreated ?? Date.distantPast) > ($1.dateCreated ?? Date.distantPast) }
+        case .title:
+            result.sort { ($0.title ?? "") < ($1.title ?? "") }
+        case .cookingTime:
+            result.sort { $0.cookingTime < $1.cookingTime }
+        case .difficulty:
+            result.sort { ($0.difficulty ?? "") < ($1.difficulty ?? "") }
+        }
+        
+        return result
     }
     
     var body: some View {
         NavigationView {
             VStack {
                 // Search Bar
-                SearchBar(text: $searchText, onSearchButtonClicked: performSearch)
+                SearchBar(text: $searchText, onSearchButtonClicked: {})
                     .padding(.horizontal)
                 
                 // Search Filters
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
-                        FilterChip(title: "Category", value: viewModel.selectedCategory, options: ["All"] + viewModel.getCategories()) { category in
-                            viewModel.selectedCategory = category
-                            performSearch()
+                        FilterChip(title: "Category", value: selectedCategory, options: ["All"] + getCategories()) { category in
+                            selectedCategory = category
                         }
                         
-                        FilterChip(title: "Difficulty", value: viewModel.selectedDifficulty, options: ["All"] + viewModel.getDifficulties()) { difficulty in
-                            viewModel.selectedDifficulty = difficulty
-                            performSearch()
+                        FilterChip(title: "Difficulty", value: selectedDifficulty, options: ["All"] + getDifficulties()) { difficulty in
+                            selectedDifficulty = difficulty
                         }
                         
-                        FilterChip(title: "Sort", value: viewModel.sortOption.rawValue, options: RecipeViewModel.SortOption.allCases.map { $0.rawValue }) { sortOption in
+                        FilterChip(title: "Sort", value: sortOption.rawValue, options: RecipeViewModel.SortOption.allCases.map { $0.rawValue }) { sortOption in
                             if let option = RecipeViewModel.SortOption.allCases.first(where: { $0.rawValue == sortOption }) {
-                                viewModel.sortOption = option
-                                performSearch()
+                                self.sortOption = option
                             }
                         }
                     }
@@ -43,10 +78,7 @@ struct SearchView: View {
                 }
                 
                 // Search Results
-                if isSearching {
-                    ProgressView("Searching...")
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if searchResults.isEmpty && !searchText.isEmpty {
+                if searchResults.isEmpty && !searchText.isEmpty {
                     EmptySearchResultsView()
                 } else if searchResults.isEmpty {
                     EmptySearchView()
@@ -63,22 +95,16 @@ struct SearchView: View {
             }
             .navigationTitle("Search Recipes")
             .navigationBarTitleDisplayMode(.large)
-            .onAppear {
-                viewModel.fetchRecipes()
-            }
         }
     }
     
-    private func performSearch() {
-        isSearching = true
-        
-        // Simulate search delay for better UX
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            viewModel.searchText = searchText
-            viewModel.fetchRecipes()
-            searchResults = viewModel.recipes
-            isSearching = false
-        }
+    private func getCategories() -> [String] {
+        let categories = recipes.compactMap { $0.category }.filter { !$0.isEmpty }
+        return Array(Set(categories)).sorted()
+    }
+    
+    private func getDifficulties() -> [String] {
+        return ["Easy", "Medium", "Hard"]
     }
 }
 

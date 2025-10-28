@@ -4,17 +4,11 @@ import CoreData
 struct RecipeDetailView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.presentationMode) var presentationMode
-    @StateObject private var viewModel: RecipeViewModel
     @State private var showingEditRecipe = false
     @State private var showingShareSheet = false
     @State private var showingDeleteAlert = false
     
     let recipe: Recipe
-    
-    init(recipe: Recipe) {
-        self.recipe = recipe
-        _viewModel = StateObject(wrappedValue: RecipeViewModel(context: PersistenceController.shared.container.viewContext))
-    }
     
     var body: some View {
         ScrollView {
@@ -160,11 +154,21 @@ struct RecipeDetailView: View {
         .alert("Delete Recipe", isPresented: $showingDeleteAlert) {
             Button("Cancel", role: .cancel) { }
             Button("Delete", role: .destructive) {
-                viewModel.deleteRecipe(recipe)
-                presentationMode.wrappedValue.dismiss()
+                deleteRecipe()
             }
         } message: {
             Text("Are you sure you want to delete this recipe? This action cannot be undone.")
+        }
+    }
+    
+    private func deleteRecipe() {
+        viewContext.delete(recipe)
+        
+        do {
+            try viewContext.save()
+            presentationMode.wrappedValue.dismiss()
+        } catch {
+            print("Error deleting recipe: \(error)")
         }
     }
     

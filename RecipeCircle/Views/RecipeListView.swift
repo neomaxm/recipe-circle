@@ -3,67 +3,110 @@ import CoreData
 
 struct RecipeListView: View {
     @Environment(\.managedObjectContext) private var viewContext
-    @State private var viewModel: RecipeViewModel?
+    @FetchRequest(
+        sortDescriptors: [NSSortDescriptor(keyPath: \Recipe.dateCreated, ascending: false)],
+        animation: .default)
+    private var recipes: FetchedResults<Recipe>
+    
     @State private var showingAddRecipe = false
     @State private var showingFilters = false
+    @State private var searchText = ""
+    @State private var selectedCategory = "All"
+    @State private var selectedDifficulty = "All"
+    @State private var sortOption = RecipeViewModel.SortOption.dateCreated
+    
+    var filteredRecipes: [Recipe] {
+        var result = Array(recipes)
+        
+        // Apply search filter
+        if !searchText.isEmpty {
+            result = result.filter { recipe in
+                (recipe.title?.localizedCaseInsensitiveContains(searchText) ?? false) ||
+                (recipe.ingredients?.localizedCaseInsensitiveContains(searchText) ?? false) ||
+                (recipe.instructions?.localizedCaseInsensitiveContains(searchText) ?? false)
+            }
+        }
+        
+        // Apply category filter
+        if selectedCategory != "All" {
+            result = result.filter { $0.category == selectedCategory }
+        }
+        
+        // Apply difficulty filter
+        if selectedDifficulty != "All" {
+            result = result.filter { $0.difficulty == selectedDifficulty }
+        }
+        
+        // Apply sorting
+        switch sortOption {
+        case .dateCreated:
+            result.sort { ($0.dateCreated ?? Date.distantPast) > ($1.dateCreated ?? Date.distantPast) }
+        case .title:
+            result.sort { ($0.title ?? "") < ($1.title ?? "") }
+        case .cookingTime:
+            result.sort { $0.cookingTime < $1.cookingTime }
+        case .difficulty:
+            result.sort { ($0.difficulty ?? "") < ($1.difficulty ?? "") }
+        }
+        
+        return result
+    }
     
     var body: some View {
         NavigationView {
             VStack {
-                if let viewModel = viewModel {
-                    // Search Bar
-                    SearchBar(text: Binding(
-                        get: { viewModel.searchText },
-                        set: { viewModel.searchText = $0 }
-                    ), onSearchButtonClicked: {
-                        viewModel.fetchRecipes()
-                    })
+                // Search Bar
+                SearchBar(text: $searchText, onSearchButtonClicked: {})
                     .padding(.horizontal)
-                    
-                    // Filter Bar
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 12) {
-                            FilterChip(title: "Category", value: viewModel.selectedCategory, options: ["All"] + viewModel.getCategories()) { category in
-                                viewModel.selectedCategory = category
-                                viewModel.fetchRecipes()
-                            }
-                            
-                            FilterChip(title: "Difficulty", value: viewModel.selectedDifficulty, options: ["All"] + viewModel.getDifficulties()) { difficulty in
-                                viewModel.selectedDifficulty = difficulty
-                                viewModel.fetchRecipes()
-                            }
-                            
-                            FilterChip(title: "Sort", value: viewModel.sortOption.rawValue, options: RecipeViewModel.SortOption.allCases.map { $0.rawValue }) { sortOption in
-                                if let option = RecipeViewModel.SortOption.allCases.first(where: { $0.rawValue == sortOption }) {
-                                    viewModel.sortOption = option
-                                    viewModel.fetchRecipes()
-                                }
+                
+                // Filter Bar
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        FilterChip(title: "Category", value: selectedCategory, options: ["All"] + getCategories()) { category in
+                            selectedCategory = category
+                        }
+                        
+                        FilterChip(title: "Difficulty", value: selectedDifficulty, options: ["All"] + getDifficulties()) { difficulty in
+                            selectedDifficulty = difficulty
+                        }
+                        
+                        FilterChip(title: "Sort", value: sortOption.rawValue, options: RecipeViewModel.SortOption.allCases.map { $0.rawValue }) { sortOption in
+                            if let option = RecipeViewModel.SortOption.allCases.first(where: { $0.rawValue == sortOption }) {
+                                self.sortOption = option
                             }
                         }
-                        .padding(.horizontal)
                     }
-                    
-                    // Recipe List
-                    if viewModel.recipes.isEmpty {
+                    .padding(.horizontal)
+                }
+                
+                // Recipe List
+                if filteredRecipes.isEmpty {
+                    if recipes.isEmpty {
                         EmptyStateView {
                             showingAddRecipe = true
                         }
                     } else {
-                        List {
-                            ForEach(viewModel.recipes, id: \.id) { recipe in
-                                NavigationLink(destination: RecipeDetailView(recipe: recipe)) {
-                                    RecipeRowView(recipe: recipe)
-                                }
-                            }
-                            .onDelete(perform: { offsets in
-                                deleteRecipes(offsets: offsets, viewModel: viewModel)
-                            })
+                        // No results from filtering
+                        VStack(spacing: 20) {
+                            Image(systemName: "magnifyingglass")
+                                .font(.system(size: 60))
+                                .foregroundColor(.gray)
+                            Text("No recipes found")
+                                .font(.title2)
+                                .foregroundColor(.secondary)
                         }
-                        .listStyle(PlainListStyle())
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                 } else {
-                    ProgressView("Loading...")
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    List {
+                        ForEach(filteredRecipes, id: \.id) { recipe in
+                            NavigationLink(destination: RecipeDetailView(recipe: recipe)) {
+                                RecipeRowView(recipe: recipe)
+                            }
+                        }
+                        .onDelete(perform: deleteRecipes)
+                    }
+                    .listStyle(PlainListStyle())
                 }
             }
             .navigationTitle("My Recipes")
@@ -79,25 +122,30 @@ struct RecipeListView: View {
             .sheet(isPresented: $showingAddRecipe) {
                 AddRecipeView()
             }
-            .onAppear {
-                if viewModel == nil {
-                    viewModel = RecipeViewModel(context: viewContext)
-                }
-                viewModel?.fetchRecipes()
+        }
+    }
+    
+    private func deleteRecipes(offsets: IndexSet) {
+        withAnimation {
+            offsets.map { filteredRecipes[$0] }.forEach { recipe in
+                viewContext.delete(recipe)
             }
-            .onChange(of: showingAddRecipe) {
-                if !showingAddRecipe {
-                    // Refresh recipes when the add recipe sheet is dismissed
-                    viewModel?.fetchRecipes()
-                }
+            
+            do {
+                try viewContext.save()
+            } catch {
+                print("Error deleting recipe: \(error)")
             }
         }
     }
     
-    private func deleteRecipes(offsets: IndexSet, viewModel: RecipeViewModel) {
-        withAnimation {
-            offsets.map { viewModel.recipes[$0] }.forEach(viewModel.deleteRecipe)
-        }
+    private func getCategories() -> [String] {
+        let categories = recipes.compactMap { $0.category }.filter { !$0.isEmpty }
+        return Array(Set(categories)).sorted()
+    }
+    
+    private func getDifficulties() -> [String] {
+        return ["Easy", "Medium", "Hard"]
     }
 }
 

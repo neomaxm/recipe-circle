@@ -57,11 +57,25 @@ struct PersistenceController {
         container.loadPersistentStores(completionHandler: { (storeDescription, error) in
             if let error = error as NSError? {
                 fatalError("Unresolved error \(error), \(error.userInfo)")
-                }
+            }
         })
         
         // Configure view context for CloudKit
         container.viewContext.automaticallyMergesChangesFromParent = true
         container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+        
+        // Ensure the view context sees changes immediately
+        container.viewContext.name = "viewContext"
+        container.viewContext.automaticallyMergesChangesFromParent = true
+        
+        // Listen for remote change notifications
+        NotificationCenter.default.addObserver(
+            forName: .NSPersistentStoreRemoteChange,
+            object: container.persistentStoreCoordinator,
+            queue: .main
+        ) { _ in
+            // The view context will automatically merge changes
+            // SwiftUI views with @FetchRequest will update automatically
+        }
     }
 }
