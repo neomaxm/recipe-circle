@@ -14,6 +14,8 @@ struct RecipeListView: View {
     @State private var selectedCategory = "All"
     @State private var selectedDifficulty = "All"
     @State private var sortOption = RecipeViewModel.SortOption.dateCreated
+    @State private var selectedRecipeForSharing: Recipe?
+    @State private var showingShareOptions = false
     
     var filteredRecipes: [Recipe] {
         var result = Array(recipes)
@@ -103,6 +105,20 @@ struct RecipeListView: View {
                             NavigationLink(destination: RecipeDetailView(recipe: recipe)) {
                                 RecipeRowView(recipe: recipe)
                             }
+                            .contextMenu {
+                                Button(action: {
+                                    selectedRecipeForSharing = recipe
+                                    showingShareOptions = true
+                                }) {
+                                    Label("Share Recipe", systemImage: "square.and.arrow.up")
+                                }
+                                
+                                Button(action: {
+                                    deleteRecipe(recipe)
+                                }) {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                            }
                         }
                         .onDelete(perform: deleteRecipes)
                     }
@@ -122,6 +138,30 @@ struct RecipeListView: View {
             .sheet(isPresented: $showingAddRecipe) {
                 AddRecipeView()
             }
+            .actionSheet(isPresented: $showingShareOptions) {
+                ActionSheet(
+                    title: Text("Share Recipe"),
+                    message: Text("Choose how you'd like to share this recipe"),
+                    buttons: [
+                        .default(Text("Send via SMS")) {
+                            if let recipe = selectedRecipeForSharing {
+                                shareViaSMS(recipe)
+                            }
+                        },
+                        .default(Text("Send via Email")) {
+                            if let recipe = selectedRecipeForSharing {
+                                shareViaEmail(recipe)
+                            }
+                        },
+                        .default(Text("More Options...")) {
+                            if let recipe = selectedRecipeForSharing {
+                                shareWithMoreOptions(recipe)
+                            }
+                        },
+                        .cancel()
+                    ]
+                )
+            }
         }
     }
     
@@ -136,6 +176,67 @@ struct RecipeListView: View {
             } catch {
                 print("Error deleting recipe: \(error)")
             }
+        }
+    }
+    
+    private func deleteRecipe(_ recipe: Recipe) {
+        withAnimation {
+            viewContext.delete(recipe)
+            
+            do {
+                try viewContext.save()
+            } catch {
+                print("Error deleting recipe: \(error)")
+            }
+        }
+    }
+    
+    private func shareViaSMS(_ recipe: Recipe) {
+        showShareSheet(for: recipe, excludedActivities: [
+            .postToFacebook,
+            .postToTwitter,
+            .mail,
+            .airDrop,
+            .print
+        ])
+    }
+    
+    private func shareViaEmail(_ recipe: Recipe) {
+        showShareSheet(for: recipe, excludedActivities: [
+            .postToFacebook,
+            .postToTwitter,
+            .message,
+            .airDrop,
+            .print
+        ])
+    }
+    
+    private func shareWithMoreOptions(_ recipe: Recipe) {
+        showShareSheet(for: recipe, excludedActivities: nil)
+    }
+    
+    private func showShareSheet(for recipe: Recipe, excludedActivities: [UIActivity.ActivityType]?) {
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.windows.first,
+           let rootViewController = window.rootViewController {
+            
+            let formattedText = ShareSheet.createFormattedRecipeText(for: recipe)
+            var items: [Any] = [formattedText]
+            
+            if let imageData = recipe.imageData, let image = UIImage(data: imageData) {
+                items.append(image)
+            }
+            
+            let activityVC = UIActivityViewController(activityItems: items, applicationActivities: nil)
+            activityVC.excludedActivityTypes = excludedActivities
+            
+            if let popover = activityVC.popoverPresentationController {
+                popover.sourceView = rootViewController.view
+                popover.sourceRect = CGRect(x: window.bounds.midX, y: window.bounds.midY, width: 0, height: 0)
+                popover.permittedArrowDirections = []
+            }
+            
+            rootViewController.present(activityVC, animated: true)
         }
     }
     
@@ -269,15 +370,14 @@ struct FilterChip: View {
             .background(Color.gray.opacity(0.1))
             .cornerRadius(16)
         }
-        .actionSheet(isPresented: $showingOptions) {
-            ActionSheet(
-                title: Text(title),
-                buttons: options.map { option in
-                    .default(Text(option)) {
-                        onSelectionChanged(option)
-                    }
-                } + [.cancel()]
-            )
+        .buttonStyle(.plain)
+        .confirmationDialog(title, isPresented: $showingOptions, titleVisibility: .visible) {
+            ForEach(options, id: \.self) { option in
+                Button(option) {
+                    onSelectionChanged(option)
+                }
+            }
+            Button("Cancel", role: .cancel) { }
         }
     }
 }

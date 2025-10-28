@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import MessageUI
 
 struct ShareSheet: UIViewControllerRepresentable {
     let recipe: Recipe
@@ -94,6 +95,222 @@ struct ShareSheet: UIViewControllerRepresentable {
         text += "📱 Shared from Recipe Circle"
         
         return text
+    }
+}
+
+// MARK: - SMS Message Composer
+
+struct SMSComposeView: UIViewControllerRepresentable {
+    let recipe: Recipe
+    @Environment(\.presentationMode) var presentationMode
+    
+    func makeUIViewController(context: Context) -> MFMessageComposeViewController {
+        let composer = MFMessageComposeViewController()
+        composer.messageComposeDelegate = context.coordinator
+        composer.body = createSMSText()
+        
+        // Add image attachment if available and not too large
+        if let imageData = recipe.imageData,
+           imageData.count < 1_000_000, // Limit to ~1MB for SMS
+           let image = UIImage(data: imageData),
+           let compressedData = image.jpegData(compressionQuality: 0.5) {
+            composer.addAttachmentData(compressedData, typeIdentifier: "public.jpeg", filename: "recipe.jpg")
+        }
+        
+        return composer
+    }
+    
+    func updateUIViewController(_ uiViewController: MFMessageComposeViewController, context: Context) {}
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    private func createSMSText() -> String {
+        var text = ""
+        
+        text += "🍽️ \(recipe.title ?? "Recipe")\n\n"
+        
+        if let category = recipe.category {
+            text += "📂 \(category)"
+        }
+        
+        if let difficulty = recipe.difficulty {
+            text += " • \(difficulty)"
+        }
+        
+        if recipe.cookingTime > 0 {
+            text += " • ⏱️ \(recipe.cookingTime)min"
+        }
+        
+        if recipe.servings > 0 {
+            text += " • 👥 \(recipe.servings) servings"
+        }
+        
+        text += "\n\n"
+        
+        // Ingredients
+        if let ingredients = recipe.ingredients, !ingredients.isEmpty {
+            text += "🥘 INGREDIENTS:\n\(ingredients)\n\n"
+        }
+        
+        // Instructions
+        if let instructions = recipe.instructions, !instructions.isEmpty {
+            text += "👨‍🍳 INSTRUCTIONS:\n\(instructions)\n\n"
+        }
+        
+        text += "📱 Shared from Recipe Circle"
+        
+        return text
+    }
+    
+    class Coordinator: NSObject, MFMessageComposeViewControllerDelegate {
+        let parent: SMSComposeView
+        
+        init(_ parent: SMSComposeView) {
+            self.parent = parent
+        }
+        
+        func messageComposeViewController(_ controller: MFMessageComposeViewController, didFinishWith result: MessageComposeResult) {
+            parent.presentationMode.wrappedValue.dismiss()
+        }
+    }
+}
+
+// MARK: - Email Composer
+
+struct EmailComposeView: UIViewControllerRepresentable {
+    let recipe: Recipe
+    @Environment(\.presentationMode) var presentationMode
+    
+    func makeUIViewController(context: Context) -> MFMailComposeViewController {
+        let composer = MFMailComposeViewController()
+        composer.mailComposeDelegate = context.coordinator
+        composer.setSubject("Recipe: \(recipe.title ?? "Untitled")")
+        composer.setMessageBody(createEmailHTML(), isHTML: true)
+        
+        // Add image attachment if available
+        if let imageData = recipe.imageData {
+            composer.addAttachmentData(imageData, mimeType: "image/jpeg", fileName: "recipe.jpg")
+        }
+        
+        return composer
+    }
+    
+    func updateUIViewController(_ uiViewController: MFMailComposeViewController, context: Context) {}
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    private func createEmailHTML() -> String {
+        var html = """
+        <html>
+        <head>
+            <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; padding: 20px; background-color: #f5f5f5; }
+                .container { background-color: white; border-radius: 10px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 600px; margin: 0 auto; }
+                h1 { color: #FF6B35; margin-bottom: 10px; }
+                .meta { background-color: #FFF3E0; padding: 15px; border-radius: 8px; margin: 20px 0; }
+                .meta-item { display: inline-block; margin-right: 15px; color: #666; }
+                .section { margin: 25px 0; }
+                .section-title { color: #FF6B35; font-weight: bold; font-size: 18px; margin-bottom: 10px; border-bottom: 2px solid #FF6B35; padding-bottom: 5px; }
+                .content { line-height: 1.6; white-space: pre-wrap; color: #333; }
+                .footer { text-align: center; color: #999; margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>🍽️ \(recipe.title ?? "Untitled Recipe")</h1>
+        """
+        
+        // Meta information
+        html += "<div class='meta'>"
+        
+        if let category = recipe.category {
+            html += "<span class='meta-item'>📂 \(category)</span>"
+        }
+        
+        if let difficulty = recipe.difficulty {
+            html += "<span class='meta-item'>⭐ \(difficulty)</span>"
+        }
+        
+        if recipe.cookingTime > 0 {
+            html += "<span class='meta-item'>⏱️ \(recipe.cookingTime) min</span>"
+        }
+        
+        if recipe.prepTime > 0 {
+            html += "<span class='meta-item'>🔪 Prep: \(recipe.prepTime) min</span>"
+        }
+        
+        if recipe.servings > 0 {
+            html += "<span class='meta-item'>👥 \(recipe.servings) servings</span>"
+        }
+        
+        html += "</div>"
+        
+        // Ingredients
+        if let ingredients = recipe.ingredients, !ingredients.isEmpty {
+            html += """
+                <div class="section">
+                    <div class="section-title">🥘 Ingredients</div>
+                    <div class="content">\(ingredients.replacingOccurrences(of: "\n", with: "<br>"))</div>
+                </div>
+            """
+        }
+        
+        // Instructions
+        if let instructions = recipe.instructions, !instructions.isEmpty {
+            html += """
+                <div class="section">
+                    <div class="section-title">👨‍🍳 Instructions</div>
+                    <div class="content">\(instructions.replacingOccurrences(of: "\n", with: "<br>"))</div>
+                </div>
+            """
+        }
+        
+        // Notes
+        if let notes = recipe.notes, !notes.isEmpty {
+            html += """
+                <div class="section">
+                    <div class="section-title">📝 Notes</div>
+                    <div class="content">\(notes.replacingOccurrences(of: "\n", with: "<br>"))</div>
+                </div>
+            """
+        }
+        
+        // Tags
+        if let tags = recipe.tags, !tags.isEmpty {
+            html += """
+                <div class="section">
+                    <div class="section-title">🏷️ Tags</div>
+                    <div class="content">\(tags)</div>
+                </div>
+            """
+        }
+        
+        html += """
+                <div class="footer">
+                    📱 Shared from Recipe Circle
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
+        return html
+    }
+    
+    class Coordinator: NSObject, MFMailComposeViewControllerDelegate {
+        let parent: EmailComposeView
+        
+        init(_ parent: EmailComposeView) {
+            self.parent = parent
+        }
+        
+        func mailComposeController(_ controller: MFMailComposeViewController, didFinishWith result: MFMailComposeResult, error: Error?) {
+            parent.presentationMode.wrappedValue.dismiss()
+        }
     }
 }
 

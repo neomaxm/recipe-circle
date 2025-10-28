@@ -1,12 +1,16 @@
 import SwiftUI
 import CoreData
+import MessageUI
 
 struct RecipeDetailView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.presentationMode) var presentationMode
     @State private var showingEditRecipe = false
     @State private var showingShareSheet = false
+    @State private var showingSMSComposer = false
+    @State private var showingEmailComposer = false
     @State private var showingDeleteAlert = false
+    @State private var showingShareAlert = false
     
     let recipe: Recipe
     
@@ -129,16 +133,30 @@ struct RecipeDetailView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Menu {
-                    Button("Edit Recipe") {
-                        showingEditRecipe = true
+                    Button(action: { showingEditRecipe = true }) {
+                        Label("Edit Recipe", systemImage: "pencil")
                     }
                     
-                    Button("Share Recipe") {
-                        showingShareSheet = true
+                    Menu {
+                        Button(action: { checkAndShowSMS() }) {
+                            Label("Send via SMS", systemImage: "message.fill")
+                        }
+                        
+                        Button(action: { checkAndShowEmail() }) {
+                            Label("Send via Email", systemImage: "envelope.fill")
+                        }
+                        
+                        Button(action: { showingShareSheet = true }) {
+                            Label("More Options...", systemImage: "square.and.arrow.up")
+                        }
+                    } label: {
+                        Label("Share Recipe", systemImage: "square.and.arrow.up")
                     }
                     
-                    Button("Delete Recipe", role: .destructive) {
-                        showingDeleteAlert = true
+                    Divider()
+                    
+                    Button(role: .destructive, action: { showingDeleteAlert = true }) {
+                        Label("Delete Recipe", systemImage: "trash")
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
@@ -151,6 +169,21 @@ struct RecipeDetailView: View {
         .sheet(isPresented: $showingShareSheet) {
             ShareSheet(recipe: recipe)
         }
+        .sheet(isPresented: $showingSMSComposer) {
+            if MessageUI.MFMessageComposeViewController.canSendText() {
+                SMSComposeView(recipe: recipe)
+            }
+        }
+        .sheet(isPresented: $showingEmailComposer) {
+            if MessageUI.MFMailComposeViewController.canSendMail() {
+                EmailComposeView(recipe: recipe)
+            }
+        }
+        .alert("Share Options Not Available", isPresented: $showingShareAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("Email or SMS is not configured on this device. Please set up Mail or Messages in Settings.")
+        }
         .alert("Delete Recipe", isPresented: $showingDeleteAlert) {
             Button("Cancel", role: .cancel) { }
             Button("Delete", role: .destructive) {
@@ -158,6 +191,22 @@ struct RecipeDetailView: View {
             }
         } message: {
             Text("Are you sure you want to delete this recipe? This action cannot be undone.")
+        }
+    }
+    
+    private func checkAndShowSMS() {
+        if MessageUI.MFMessageComposeViewController.canSendText() {
+            showingSMSComposer = true
+        } else {
+            showingShareAlert = true
+        }
+    }
+    
+    private func checkAndShowEmail() {
+        if MessageUI.MFMailComposeViewController.canSendMail() {
+            showingEmailComposer = true
+        } else {
+            showingShareAlert = true
         }
     }
     
