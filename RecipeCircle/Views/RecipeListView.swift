@@ -3,60 +3,67 @@ import CoreData
 
 struct RecipeListView: View {
     @Environment(\.managedObjectContext) private var viewContext
-    @StateObject private var viewModel: RecipeViewModel
+    @State private var viewModel: RecipeViewModel?
     @State private var showingAddRecipe = false
     @State private var showingFilters = false
-    
-    init() {
-        // This will be properly initialized in the body
-        _viewModel = StateObject(wrappedValue: RecipeViewModel(context: PersistenceController.shared.container.viewContext))
-    }
     
     var body: some View {
         NavigationView {
             VStack {
-                // Search Bar
-                SearchBar(text: $viewModel.searchText, onSearchButtonClicked: {
-                    viewModel.fetchRecipes()
-                })
-                .padding(.horizontal)
-                
-                // Filter Bar
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        FilterChip(title: "Category", value: viewModel.selectedCategory, options: ["All"] + viewModel.getCategories()) { category in
-                            viewModel.selectedCategory = category
-                            viewModel.fetchRecipes()
-                        }
-                        
-                        FilterChip(title: "Difficulty", value: viewModel.selectedDifficulty, options: ["All"] + viewModel.getDifficulties()) { difficulty in
-                            viewModel.selectedDifficulty = difficulty
-                            viewModel.fetchRecipes()
-                        }
-                        
-                        FilterChip(title: "Sort", value: viewModel.sortOption.rawValue, options: RecipeViewModel.SortOption.allCases.map { $0.rawValue }) { sortOption in
-                            if let option = RecipeViewModel.SortOption.allCases.first(where: { $0.rawValue == sortOption }) {
-                                viewModel.sortOption = option
+                if let viewModel = viewModel {
+                    // Search Bar
+                    SearchBar(text: Binding(
+                        get: { viewModel.searchText },
+                        set: { viewModel.searchText = $0 }
+                    ), onSearchButtonClicked: {
+                        viewModel.fetchRecipes()
+                    })
+                    .padding(.horizontal)
+                    
+                    // Filter Bar
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 12) {
+                            FilterChip(title: "Category", value: viewModel.selectedCategory, options: ["All"] + viewModel.getCategories()) { category in
+                                viewModel.selectedCategory = category
                                 viewModel.fetchRecipes()
                             }
-                        }
-                    }
-                    .padding(.horizontal)
-                }
-                
-                // Recipe List
-                if viewModel.recipes.isEmpty {
-                    EmptyStateView()
-                } else {
-                    List {
-                        ForEach(viewModel.recipes, id: \.id) { recipe in
-                            NavigationLink(destination: RecipeDetailView(recipe: recipe)) {
-                                RecipeRowView(recipe: recipe)
+                            
+                            FilterChip(title: "Difficulty", value: viewModel.selectedDifficulty, options: ["All"] + viewModel.getDifficulties()) { difficulty in
+                                viewModel.selectedDifficulty = difficulty
+                                viewModel.fetchRecipes()
+                            }
+                            
+                            FilterChip(title: "Sort", value: viewModel.sortOption.rawValue, options: RecipeViewModel.SortOption.allCases.map { $0.rawValue }) { sortOption in
+                                if let option = RecipeViewModel.SortOption.allCases.first(where: { $0.rawValue == sortOption }) {
+                                    viewModel.sortOption = option
+                                    viewModel.fetchRecipes()
+                                }
                             }
                         }
-                        .onDelete(perform: deleteRecipes)
+                        .padding(.horizontal)
                     }
-                    .listStyle(PlainListStyle())
+                    
+                    // Recipe List
+                    if viewModel.recipes.isEmpty {
+                        EmptyStateView {
+                            showingAddRecipe = true
+                        }
+                    } else {
+                        List {
+                            ForEach(viewModel.recipes, id: \.id) { recipe in
+                                NavigationLink(destination: RecipeDetailView(recipe: recipe)) {
+                                    RecipeRowView(recipe: recipe)
+                                }
+                            }
+                            .onDelete(perform: { offsets in
+                                deleteRecipes(offsets: offsets, viewModel: viewModel)
+                            })
+                        }
+                        .listStyle(PlainListStyle())
+                    }
+                } else {
+                    ProgressView("Loading...")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
             .navigationTitle("My Recipes")
@@ -73,12 +80,21 @@ struct RecipeListView: View {
                 AddRecipeView()
             }
             .onAppear {
-                viewModel.fetchRecipes()
+                if viewModel == nil {
+                    viewModel = RecipeViewModel(context: viewContext)
+                }
+                viewModel?.fetchRecipes()
+            }
+            .onChange(of: showingAddRecipe) {
+                if !showingAddRecipe {
+                    // Refresh recipes when the add recipe sheet is dismissed
+                    viewModel?.fetchRecipes()
+                }
             }
         }
     }
     
-    private func deleteRecipes(offsets: IndexSet) {
+    private func deleteRecipes(offsets: IndexSet, viewModel: RecipeViewModel) {
         withAnimation {
             offsets.map { viewModel.recipes[$0] }.forEach(viewModel.deleteRecipe)
         }
@@ -219,6 +235,8 @@ struct FilterChip: View {
 }
 
 struct EmptyStateView: View {
+    let onAddRecipe: () -> Void
+    
     var body: some View {
         VStack(spacing: 20) {
             Image(systemName: "book.closed")
@@ -237,7 +255,7 @@ struct EmptyStateView: View {
                 .padding(.horizontal, 40)
             
             Button("Add Recipe") {
-                // This will be handled by the parent view
+                onAddRecipe()
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)

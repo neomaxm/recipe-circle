@@ -33,15 +33,35 @@ struct PersistenceController {
     let container: NSPersistentContainer
 
     init(inMemory: Bool = false) {
-        container = NSPersistentContainer(name: "RecipeModel")
+        // Use NSPersistentCloudKitContainer for iCloud sync
+        container = NSPersistentCloudKitContainer(name: "RecipeModel")
+        
         if inMemory {
             container.persistentStoreDescriptions.first!.url = URL(fileURLWithPath: "/dev/null")
+        } else {
+            // Configure CloudKit integration
+            guard let description = container.persistentStoreDescriptions.first else {
+                fatalError("Could not retrieve a persistent store description.")
+            }
+            
+            // Enable persistent history tracking for CloudKit
+            description.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
+            description.setOption(true as NSNumber, forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
+            
+            // Configure CloudKit container options
+            description.cloudKitContainerOptions = NSPersistentCloudKitContainerOptions(
+                containerIdentifier: "iCloud.com.recipecircle.app"
+            )
         }
+        
         container.loadPersistentStores(completionHandler: { (storeDescription, error) in
             if let error = error as NSError? {
                 fatalError("Unresolved error \(error), \(error.userInfo)")
-            }
+                }
         })
+        
+        // Configure view context for CloudKit
         container.viewContext.automaticallyMergesChangesFromParent = true
+        container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
     }
 }

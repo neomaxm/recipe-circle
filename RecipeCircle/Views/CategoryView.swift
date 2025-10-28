@@ -3,27 +3,30 @@ import CoreData
 
 struct CategoryView: View {
     @Environment(\.managedObjectContext) private var viewContext
-    @StateObject private var viewModel: RecipeViewModel
+    @State private var viewModel: RecipeViewModel?
     @State private var showingAddCategory = false
     @State private var newCategoryName = ""
-    
-    init() {
-        _viewModel = StateObject(wrappedValue: RecipeViewModel(context: PersistenceController.shared.container.viewContext))
-    }
     
     var body: some View {
         NavigationView {
             VStack {
-                if viewModel.getCategories().isEmpty {
-                    EmptyCategoriesView()
-                } else {
-                    List {
-                        ForEach(viewModel.getCategories(), id: \.self) { category in
-                            CategoryRowView(category: category, recipeCount: getRecipeCount(for: category))
+                if let viewModel = viewModel {
+                    if viewModel.getCategories().isEmpty {
+                        EmptyCategoriesView()
+                    } else {
+                        List {
+                            ForEach(viewModel.getCategories(), id: \.self) { category in
+                                CategoryRowView(category: category, recipeCount: getRecipeCount(for: category))
+                            }
+                            .onDelete(perform: { offsets in
+                                deleteCategories(offsets: offsets, viewModel: viewModel)
+                            })
                         }
-                        .onDelete(perform: deleteCategories)
+                        .listStyle(PlainListStyle())
                     }
-                    .listStyle(PlainListStyle())
+                } else {
+                    ProgressView("Loading...")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
             .navigationTitle("Categories")
@@ -48,7 +51,16 @@ struct CategoryView: View {
                 Text("Enter a name for the new category")
             }
             .onAppear {
-                viewModel.fetchRecipes()
+                if viewModel == nil {
+                    viewModel = RecipeViewModel(context: viewContext)
+                }
+                viewModel?.fetchRecipes()
+            }
+            .onChange(of: showingAddCategory) {
+                if !showingAddCategory {
+                    // Refresh categories when the add category alert is dismissed
+                    viewModel?.fetchRecipes()
+                }
             }
         }
     }
@@ -64,7 +76,7 @@ struct CategoryView: View {
         }
     }
     
-    private func deleteCategories(offsets: IndexSet) {
+    private func deleteCategories(offsets: IndexSet, viewModel: RecipeViewModel) {
         let categories = viewModel.getCategories()
         for index in offsets {
             let category = categories[index]
@@ -88,8 +100,25 @@ struct CategoryView: View {
     private func addCategory() {
         guard !newCategoryName.trimmingCharacters(in: .whitespaces).isEmpty else { return }
         
-        // Categories are automatically created when recipes are assigned to them
-        // This is just for UI purposes - the actual category will be created when a recipe uses it
+        // Create a sample recipe with the new category to make it appear in the list
+        guard let viewModel = viewModel else { return }
+        
+        let categoryName = newCategoryName.trimmingCharacters(in: .whitespaces)
+        
+        viewModel.addRecipe(
+            title: "Sample Recipe for \(categoryName)",
+            ingredients: "Add your ingredients here",
+            instructions: "Add your instructions here",
+            category: categoryName,
+            difficulty: "Easy",
+            cookingTime: 30,
+            prepTime: 15,
+            servings: 4,
+            notes: "This is a sample recipe created for the \(categoryName) category. You can edit or delete it.",
+            tags: "sample, \(categoryName.lowercased())",
+            imageData: nil
+        )
+        
         newCategoryName = ""
         showingAddCategory = false
     }
@@ -125,28 +154,41 @@ struct CategoryRowView: View {
 
 struct CategoryDetailView: View {
     @Environment(\.managedObjectContext) private var viewContext
-    @StateObject private var viewModel: RecipeViewModel
+    @State private var viewModel: RecipeViewModel?
     let category: String
+    
+    var body: some View {
+        Group {
+            if let viewModel = viewModel {
+                List {
+                    ForEach(viewModel.recipes.filter { $0.category == category }, id: \.id) { recipe in
+                        NavigationLink(destination: RecipeDetailView(recipe: recipe)) {
+                            RecipeRowView(recipe: recipe)
+                        }
+                    }
+                }
+                .navigationTitle(category)
+                .navigationBarTitleDisplayMode(.large)
+            } else {
+                ProgressView("Loading...")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .onAppear {
+            setupViewModel()
+        }
+    }
     
     init(category: String) {
         self.category = category
-        _viewModel = StateObject(wrappedValue: RecipeViewModel(context: PersistenceController.shared.container.viewContext))
     }
     
-    var body: some View {
-        List {
-            ForEach(viewModel.recipes.filter { $0.category == category }, id: \.id) { recipe in
-                NavigationLink(destination: RecipeDetailView(recipe: recipe)) {
-                    RecipeRowView(recipe: recipe)
-                }
-            }
+    private func setupViewModel() {
+        if viewModel == nil {
+            viewModel = RecipeViewModel(context: viewContext)
         }
-        .navigationTitle(category)
-        .navigationBarTitleDisplayMode(.large)
-        .onAppear {
-            viewModel.selectedCategory = category
-            viewModel.fetchRecipes()
-        }
+        viewModel?.selectedCategory = category
+        viewModel?.fetchRecipes()
     }
 }
 

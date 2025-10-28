@@ -10,7 +10,11 @@ struct ShareSheet: UIViewControllerRepresentable {
         
         // Configure for iPad
         if let popover = activityViewController.popoverPresentationController {
-            popover.sourceView = UIApplication.shared.windows.first?.rootViewController?.view
+            // Use modern iOS 15+ approach to get the window scene
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let window = windowScene.windows.first {
+                popover.sourceView = window.rootViewController?.view
+            }
             popover.sourceRect = CGRect(x: UIScreen.main.bounds.width / 2, y: UIScreen.main.bounds.height / 2, width: 0, height: 0)
             popover.permittedArrowDirections = []
         }

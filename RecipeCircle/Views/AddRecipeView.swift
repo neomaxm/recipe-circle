@@ -5,7 +5,7 @@ import CoreData
 struct AddRecipeView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @Environment(\.presentationMode) var presentationMode
-    @StateObject private var viewModel: RecipeViewModel
+    @State private var viewModel: RecipeViewModel?
     
     // Form fields
     @State private var title = ""
@@ -32,129 +32,136 @@ struct AddRecipeView: View {
     init(recipe: Recipe? = nil) {
         self.recipe = recipe
         self.isEditing = recipe != nil
-        _viewModel = StateObject(wrappedValue: RecipeViewModel(context: PersistenceController.shared.container.viewContext))
     }
     
     var body: some View {
         NavigationView {
-            Form {
-                Section(header: Text("Basic Information")) {
-                    TextField("Recipe Title", text: $title)
-                    
-                    Picker("Category", selection: $category) {
-                        Text("Select Category").tag("")
-                        ForEach(viewModel.getCategories(), id: \.self) { category in
-                            Text(category).tag(category)
-                        }
-                    }
-                    
-                    Picker("Difficulty", selection: $difficulty) {
-                        ForEach(viewModel.getDifficulties(), id: \.self) { difficulty in
-                            Text(difficulty).tag(difficulty)
-                        }
-                    }
-                }
-                
-                Section(header: Text("Recipe Image")) {
-                    HStack {
-                        if let imageData = imageData, let uiImage = UIImage(data: imageData) {
-                            Image(uiImage: uiImage)
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                                .frame(width: 100, height: 100)
-                                .clipped()
-                                .cornerRadius(8)
-                        } else {
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(Color.gray.opacity(0.3))
-                                .frame(width: 100, height: 100)
-                                .overlay(
-                                    Image(systemName: "photo")
-                                        .foregroundColor(.gray)
-                                        .font(.title2)
-                                )
+            if let viewModel = viewModel {
+                Form {
+                    Section(header: Text("Basic Information")) {
+                        TextField("Recipe Title", text: $title)
+                        
+                        Picker("Category", selection: $category) {
+                            Text("Select Category").tag("")
+                            ForEach(viewModel.getCategories(), id: \.self) { category in
+                                Text(category).tag(category)
+                            }
                         }
                         
-                        VStack(alignment: .leading) {
-                            PhotosPicker(selection: $selectedImage, matching: .images) {
-                                Text("Choose Photo")
-                                    .foregroundColor(.orange)
+                        Picker("Difficulty", selection: $difficulty) {
+                            ForEach(viewModel.getDifficulties(), id: \.self) { difficulty in
+                                Text(difficulty).tag(difficulty)
+                            }
+                        }
+                    }
+                    
+                    Section(header: Text("Recipe Image")) {
+                        HStack {
+                            if let imageData = imageData, let uiImage = UIImage(data: imageData) {
+                                Image(uiImage: uiImage)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: 100, height: 100)
+                                    .clipped()
+                                    .cornerRadius(8)
+                            } else {
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color.gray.opacity(0.3))
+                                    .frame(width: 100, height: 100)
+                                    .overlay(
+                                        Image(systemName: "photo")
+                                            .foregroundColor(.gray)
+                                            .font(.title2)
+                                    )
                             }
                             
-                            if imageData != nil {
-                                Button("Remove Photo") {
-                                    imageData = nil
-                                    selectedImage = nil
+                            VStack(alignment: .leading) {
+                                PhotosPicker(selection: $selectedImage, matching: .images) {
+                                    Text("Choose Photo")
+                                        .foregroundColor(.orange)
                                 }
-                                .foregroundColor(.red)
+                                
+                                if imageData != nil {
+                                    Button("Remove Photo") {
+                                        imageData = nil
+                                        selectedImage = nil
+                                    }
+                                    .foregroundColor(.red)
+                                }
                             }
+                            
+                            Spacer()
+                        }
+                    }
+                    
+                    Section(header: Text("Timing & Servings")) {
+                        HStack {
+                            TextField("Prep Time (min)", text: $prepTime)
+                                .keyboardType(.numberPad)
+                            TextField("Cook Time (min)", text: $cookingTime)
+                                .keyboardType(.numberPad)
                         }
                         
-                        Spacer()
-                    }
-                }
-                
-                Section(header: Text("Timing & Servings")) {
-                    HStack {
-                        TextField("Prep Time (min)", text: $prepTime)
-                            .keyboardType(.numberPad)
-                        TextField("Cook Time (min)", text: $cookingTime)
+                        TextField("Servings", text: $servings)
                             .keyboardType(.numberPad)
                     }
                     
-                    TextField("Servings", text: $servings)
-                        .keyboardType(.numberPad)
-                }
-                
-                Section(header: Text("Ingredients")) {
-                    TextField("Enter ingredients (one per line)", text: $ingredients, axis: .vertical)
-                        .lineLimit(5...10)
-                }
-                
-                Section(header: Text("Instructions")) {
-                    TextField("Enter step-by-step instructions", text: $instructions, axis: .vertical)
-                        .lineLimit(5...15)
-                }
-                
-                Section(header: Text("Additional Information")) {
-                    TextField("Notes (optional)", text: $notes, axis: .vertical)
-                        .lineLimit(3...5)
+                    Section(header: Text("Ingredients")) {
+                        TextField("Enter ingredients (one per line)", text: $ingredients, axis: .vertical)
+                            .lineLimit(5...10)
+                    }
                     
-                    TextField("Tags (comma separated)", text: $tags)
-                }
-            }
-            .navigationTitle(isEditing ? "Edit Recipe" : "Add Recipe")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        presentationMode.wrappedValue.dismiss()
+                    Section(header: Text("Instructions")) {
+                        TextField("Enter step-by-step instructions", text: $instructions, axis: .vertical)
+                            .lineLimit(5...15)
+                    }
+                    
+                    Section(header: Text("Additional Information")) {
+                        TextField("Notes (optional)", text: $notes, axis: .vertical)
+                            .lineLimit(3...5)
+                        
+                        TextField("Tags (comma separated)", text: $tags)
                     }
                 }
-                
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Save") {
-                        saveRecipe()
+                .navigationTitle(isEditing ? "Edit Recipe" : "Add Recipe")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Button("Cancel") {
+                            presentationMode.wrappedValue.dismiss()
+                        }
                     }
-                    .disabled(!isFormValid)
-                }
-            }
-            .onAppear {
-                if isEditing, let recipe = recipe {
-                    loadRecipeData(recipe)
-                }
-            }
-            .onChange(of: selectedImage) { newValue in
-                Task {
-                    if let data = try? await newValue?.loadTransferable(type: Data.self) {
-                        imageData = data
+                    
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button("Save") {
+                            saveRecipe(viewModel: viewModel)
+                        }
+                        .disabled(!isFormValid)
                     }
                 }
+                .onChange(of: selectedImage) {
+                    Task {
+                        if let data = try? await selectedImage?.loadTransferable(type: Data.self) {
+                            imageData = data
+                        }
+                    }
+                }
+                .alert("Error", isPresented: $showingAlert) {
+                    Button("OK") { }
+                } message: {
+                    Text(alertMessage)
+                }
+            } else {
+                ProgressView("Loading...")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .alert("Error", isPresented: $showingAlert) {
-                Button("OK") { }
-            } message: {
-                Text(alertMessage)
+        }
+        .onAppear {
+            if viewModel == nil {
+                viewModel = RecipeViewModel(context: viewContext)
+            }
+            if isEditing, let recipe = recipe {
+                loadRecipeData(recipe)
             }
         }
     }
@@ -177,7 +184,7 @@ struct AddRecipeView: View {
         imageData = recipe.imageData
     }
     
-    private func saveRecipe() {
+    private func saveRecipe(viewModel: RecipeViewModel) {
         guard isFormValid else {
             alertMessage = "Please fill in all required fields"
             showingAlert = true

@@ -25,6 +25,13 @@ struct ContentView: View {
                     Text("Search")
                 }
                 .tag(2)
+            
+            SettingsView()
+                .tabItem {
+                    Image(systemName: "gear")
+                    Text("Settings")
+                }
+                .tag(3)
         }
         .accentColor(.orange)
     }
@@ -33,4 +40,5 @@ struct ContentView: View {
 #Preview {
     ContentView()
         .environment(\.managedObjectContext, PersistenceController.preview.container.viewContext)
+        .environmentObject(CloudKitManager())
 }

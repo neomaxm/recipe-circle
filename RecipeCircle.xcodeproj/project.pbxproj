@@ -20,6 +20,8 @@
 		AA00000000000015 /* CategoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000016 /* CategoryView.swift */; };
 		AA00000000000017 /* SearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000018 /* SearchView.swift */; };
 		AA00000000000019 /* ShareSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000001A /* ShareSheet.swift */; };
+		AA00000000000030 /* CloudKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000031 /* CloudKitManager.swift */; };
+		AA00000000000032 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000033 /* SettingsView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -37,6 +39,10 @@
 		AA00000000000018 /* SearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchView.swift; sourceTree = "<group>"; };
 		AA0000000000001A /* ShareSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareSheet.swift; sourceTree = "<group>"; };
 		AA0000000000001B /* RecipeModel.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = RecipeModel.xcdatamodel; sourceTree = "<group>"; };
+		AA00000000000031 /* CloudKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudKitManager.swift; sourceTree = "<group>"; };
+		AA00000000000033 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		FAB89E772EB12FA600EE4C1E /* RecipeCircle.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RecipeCircle.entitlements; sourceTree = "<group>"; };
+		FAB89E782EB1308600EE4C1E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -50,38 +56,24 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		AA0000000000001D = {
+		AA0000000000001D /* RecipeCircle */ = {
 			isa = PBXGroup;
 			children = (
-				AA0000000000001E /* RecipeCircle */,
-				AA0000000000001F /* Products */,
-			);
-			sourceTree = "<group>";
-		};
-		AA0000000000001E /* RecipeCircle */ = {
-			isa = PBXGroup;
-			children = (
+				FAB89E782EB1308600EE4C1E /* Info.plist */,
+				FAB89E772EB12FA600EE4C1E /* RecipeCircle.entitlements */,
+				AA0000000000001E /* Views */,
+				AA0000000000001F /* ViewModels */,
+				AA00000000000020 /* Models */,
+				AA00000000000021 /* Utils */,
 				AA00000000000002 /* RecipeCircleApp.swift */,
 				AA00000000000004 /* ContentView.swift */,
-				AA00000000000020 /* Views */,
-				AA00000000000021 /* ViewModels */,
-				AA00000000000022 /* Models */,
-				AA00000000000023 /* Utils */,
 				AA00000000000006 /* Assets.xcassets */,
-				AA00000000000024 /* Preview Content */,
+				AA00000000000022 /* Preview Content */,
 			);
 			path = RecipeCircle;
 			sourceTree = "<group>";
 		};
-		AA0000000000001F /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				AA00000000000000 /* RecipeCircle.app */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
-		AA00000000000020 /* Views */ = {
+		AA0000000000001E /* Views */ = {
 			isa = PBXGroup;
 			children = (
 				AA0000000000000E /* RecipeListView.swift */,
@@ -89,11 +81,12 @@
 				AA00000000000012 /* AddRecipeView.swift */,
 				AA00000000000016 /* CategoryView.swift */,
 				AA00000000000018 /* SearchView.swift */,
+				AA00000000000033 /* SettingsView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
 		};
-		AA00000000000021 /* ViewModels */ = {
+		AA0000000000001F /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
 				AA00000000000014 /* RecipeViewModel.swift */,
@@ -101,16 +94,17 @@
 			path = ViewModels;
 			sourceTree = "<group>";
 		};
-		AA00000000000022 /* Models */ = {
+		AA00000000000020 /* Models */ = {
 			isa = PBXGroup;
 			children = (
 				AA0000000000000A /* RecipeModel.xcdatamodeld */,
 				AA0000000000000C /* PersistenceController.swift */,
+				AA00000000000031 /* CloudKitManager.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
 		};
-		AA00000000000023 /* Utils */ = {
+		AA00000000000021 /* Utils */ = {
 			isa = PBXGroup;
 			children = (
 				AA0000000000001A /* ShareSheet.swift */,
@@ -118,12 +112,28 @@
 			path = Utils;
 			sourceTree = "<group>";
 		};
-		AA00000000000024 /* Preview Content */ = {
+		AA00000000000022 /* Preview Content */ = {
 			isa = PBXGroup;
 			children = (
 				AA00000000000008 /* Preview Assets.xcassets */,
 			);
 			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		AA00000000000023 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				AA00000000000000 /* RecipeCircle.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		AA00000000000024 = {
+			isa = PBXGroup;
+			children = (
+				AA0000000000001D /* RecipeCircle */,
+				AA00000000000023 /* Products */,
+			);
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -169,8 +179,8 @@
 				en,
 				Base,
 			);
-			mainGroup = AA0000000000001D;
-			productRefGroup = AA0000000000001F /* Products */;
+			mainGroup = AA00000000000024;
+			productRefGroup = AA00000000000023 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -206,6 +216,8 @@
 				AA00000000000015 /* CategoryView.swift in Sources */,
 				AA00000000000017 /* SearchView.swift in Sources */,
 				AA00000000000019 /* ShareSheet.swift in Sources */,
+				AA00000000000030 /* CloudKitManager.swift in Sources */,
+				AA00000000000032 /* SettingsView.swift in Sources */,
 				AA00000000000001 /* RecipeCircleApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -337,12 +349,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = RecipeCircle/RecipeCircle.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"RecipeCircle/Preview Content\"";
 				DEVELOPMENT_TEAM = HNS5WR3PKJ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = RecipeCircle/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -366,12 +380,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = RecipeCircle/RecipeCircle.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"RecipeCircle/Preview Content\"";
 				DEVELOPMENT_TEAM = HNS5WR3PKJ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = RecipeCircle/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
