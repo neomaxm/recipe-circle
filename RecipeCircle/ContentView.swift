@@ -12,26 +12,33 @@ struct ContentView: View {
                 }
                 .tag(0)
             
+            FavoritesView()
+                .tabItem {
+                    Image(systemName: "heart.fill")
+                    Text("Favorites")
+                }
+                .tag(1)
+            
             CategoryView()
                 .tabItem {
                     Image(systemName: "folder.fill")
                     Text("Categories")
                 }
-                .tag(1)
+                .tag(2)
             
             SearchView()
                 .tabItem {
                     Image(systemName: "magnifyingglass")
                     Text("Search")
                 }
-                .tag(2)
+                .tag(3)
             
             SettingsView()
                 .tabItem {
                     Image(systemName: "gear")
                     Text("Settings")
                 }
-                .tag(3)
+                .tag(4)
         }
         .accentColor(.orange)
     }

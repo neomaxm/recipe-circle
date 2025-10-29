@@ -39,10 +39,22 @@ struct RecipeDetailView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     // Recipe Title and Meta Info
                     VStack(alignment: .leading, spacing: 8) {
-                        Text(recipe.title ?? "Untitled Recipe")
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
-                            .foregroundColor(.primary)
+                        HStack(alignment: .top) {
+                            Text(recipe.title ?? "Untitled Recipe")
+                                .font(.largeTitle)
+                                .fontWeight(.bold)
+                                .foregroundColor(.primary)
+                            
+                            Spacer()
+                            
+                            Button(action: {
+                                toggleFavorite()
+                            }) {
+                                Image(systemName: recipe.isFavorite ? "heart.fill" : "heart")
+                                    .font(.title2)
+                                    .foregroundColor(recipe.isFavorite ? .red : .gray)
+                            }
+                        }
                         
                         HStack(spacing: 16) {
                             if recipe.cookingTime > 0 {
@@ -207,6 +219,16 @@ struct RecipeDetailView: View {
             showingEmailComposer = true
         } else {
             showingShareAlert = true
+        }
+    }
+    
+    private func toggleFavorite() {
+        recipe.isFavorite.toggle()
+        
+        do {
+            try viewContext.save()
+        } catch {
+            print("Error toggling favorite: \(error)")
         }
     }
     

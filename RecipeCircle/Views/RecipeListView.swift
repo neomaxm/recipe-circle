@@ -13,6 +13,7 @@ struct RecipeListView: View {
     @State private var searchText = ""
     @State private var selectedCategory = "All"
     @State private var selectedDifficulty = "All"
+    @State private var showFavoritesOnly = false
     @State private var sortOption = RecipeViewModel.SortOption.dateCreated
     @State private var selectedRecipeForSharing: Recipe?
     @State private var showingShareOptions = false
@@ -37,6 +38,11 @@ struct RecipeListView: View {
         // Apply difficulty filter
         if selectedDifficulty != "All" {
             result = result.filter { $0.difficulty == selectedDifficulty }
+        }
+        
+        // Apply favorites filter
+        if showFavoritesOnly {
+            result = result.filter { $0.isFavorite }
         }
         
         // Apply sorting
@@ -64,6 +70,25 @@ struct RecipeListView: View {
                 // Filter Bar
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
+                        // Favorites Toggle
+                        Button(action: {
+                            showFavoritesOnly.toggle()
+                        }) {
+                            HStack(spacing: 4) {
+                                Image(systemName: showFavoritesOnly ? "heart.fill" : "heart")
+                                    .font(.caption)
+                                Text("Favorites")
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(showFavoritesOnly ? Color.red.opacity(0.15) : Color.gray.opacity(0.1))
+                            .foregroundColor(showFavoritesOnly ? .red : .primary)
+                            .cornerRadius(16)
+                        }
+                        .buttonStyle(.plain)
+                        
                         FilterChip(title: "Category", value: selectedCategory, options: ["All"] + getCategories()) { category in
                             selectedCategory = category
                         }
@@ -275,10 +300,18 @@ struct RecipeRowView: View {
             }
             
             VStack(alignment: .leading, spacing: 4) {
-                Text(recipe.title ?? "Untitled Recipe")
-                    .font(.headline)
-                    .foregroundColor(.primary)
-                    .lineLimit(2)
+                HStack {
+                    Text(recipe.title ?? "Untitled Recipe")
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                        .lineLimit(2)
+                    
+                    if recipe.isFavorite {
+                        Image(systemName: "heart.fill")
+                            .font(.caption)
+                            .foregroundColor(.red)
+                    }
+                }
                 
                 if let category = recipe.category {
                     Text(category)

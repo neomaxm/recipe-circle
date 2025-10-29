@@ -22,6 +22,7 @@
 		AA00000000000019 /* ShareSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000000000001A /* ShareSheet.swift */; };
 		AA00000000000030 /* CloudKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000031 /* CloudKitManager.swift */; };
 		AA00000000000032 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000033 /* SettingsView.swift */; };
+		AA00000000000034 /* FavoritesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000035 /* FavoritesView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -41,6 +42,7 @@
 		AA0000000000001B /* RecipeModel.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = RecipeModel.xcdatamodel; sourceTree = "<group>"; };
 		AA00000000000031 /* CloudKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudKitManager.swift; sourceTree = "<group>"; };
 		AA00000000000033 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		AA00000000000035 /* FavoritesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoritesView.swift; sourceTree = "<group>"; };
 		FAB89E772EB12FA600EE4C1E /* RecipeCircle.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RecipeCircle.entitlements; sourceTree = "<group>"; };
 		FAB89E782EB1308600EE4C1E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -80,6 +82,7 @@
 				AA00000000000010 /* RecipeDetailView.swift */,
 				AA00000000000012 /* AddRecipeView.swift */,
 				AA00000000000016 /* CategoryView.swift */,
+				AA00000000000035 /* FavoritesView.swift */,
 				AA00000000000018 /* SearchView.swift */,
 				AA00000000000033 /* SettingsView.swift */,
 			);
@@ -214,6 +217,7 @@
 				AA00000000000011 /* AddRecipeView.swift in Sources */,
 				AA00000000000013 /* RecipeViewModel.swift in Sources */,
 				AA00000000000015 /* CategoryView.swift in Sources */,
+				AA00000000000034 /* FavoritesView.swift in Sources */,
 				AA00000000000017 /* SearchView.swift in Sources */,
 				AA00000000000019 /* ShareSheet.swift in Sources */,
 				AA00000000000030 /* CloudKitManager.swift in Sources */,
