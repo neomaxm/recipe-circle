@@ -34,6 +34,8 @@ class CloudKitManager: ObservableObject {
                     self?.errorMessage = "iCloud account is restricted."
                 case .couldNotDetermine:
                     self?.errorMessage = "Could not determine iCloud account status."
+                case .temporarilyUnavailable:
+                    self?.errorMessage = "Temporarily Unavailable."
                 @unknown default:
                     self?.errorMessage = "Unknown iCloud account status."
                 }
@@ -55,6 +57,8 @@ class CloudKitManager: ObservableObject {
             return "iCloud account is restricted"
         case .couldNotDetermine:
             return "Checking iCloud status..."
+        case .temporarilyUnavailable:
+            return "Temporarily Unavailable"
         @unknown default:
             return "Unknown iCloud status"
         }
@@ -67,6 +71,8 @@ class CloudKitManager: ObservableObject {
         case .noAccount, .restricted:
             return .orange
         case .couldNotDetermine:
+            return .gray
+        case .temporarilyUnavailable:
             return .gray
         @unknown default:
             return .gray
