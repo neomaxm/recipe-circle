@@ -35,7 +35,7 @@ struct AddRecipeView: View {
     }
     
     var body: some View {
-        NavigationView {
+        ConditionalNavigationView {
             Form {
                 Section(header: Text("Basic Information")) {
                     TextField("Recipe Title", text: $title)

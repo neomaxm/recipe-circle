@@ -5,7 +5,7 @@ struct SettingsView: View {
     @State private var showingCloudKitInfo = false
     
     var body: some View {
-        NavigationView {
+        ConditionalNavigationView {
             List {
                 Section(header: Text("iCloud Sync")) {
                     HStack {

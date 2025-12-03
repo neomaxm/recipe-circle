@@ -17,7 +17,7 @@ struct CategoryView: View {
     }
     
     var body: some View {
-        NavigationView {
+        ConditionalNavigationView {
             VStack {
                 if categories.isEmpty {
                     EmptyCategoriesView()

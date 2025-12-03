@@ -51,7 +51,7 @@ struct SearchView: View {
     }
     
     var body: some View {
-        NavigationView {
+        ConditionalNavigationView {
             VStack {
                 // Search Bar
                 SearchBar(text: $searchText, onSearchButtonClicked: {})

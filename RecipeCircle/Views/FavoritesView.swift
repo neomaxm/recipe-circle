@@ -27,7 +27,7 @@ struct FavoritesView: View {
     }
     
     var body: some View {
-        NavigationView {
+        ConditionalNavigationView {
             VStack {
                 // Search Bar
                 if !favoriteRecipes.isEmpty {
