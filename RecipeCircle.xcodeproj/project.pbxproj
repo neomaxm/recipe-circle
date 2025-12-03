@@ -23,6 +23,7 @@
 		AA00000000000030 /* CloudKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000031 /* CloudKitManager.swift */; };
 		AA00000000000032 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000033 /* SettingsView.swift */; };
 		AA00000000000034 /* FavoritesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000035 /* FavoritesView.swift */; };
+		AA00000000000037 /* ConditionalNavigationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000036 /* ConditionalNavigationView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -43,6 +44,7 @@
 		AA00000000000031 /* CloudKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudKitManager.swift; sourceTree = "<group>"; };
 		AA00000000000033 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		AA00000000000035 /* FavoritesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoritesView.swift; sourceTree = "<group>"; };
+		AA00000000000036 /* ConditionalNavigationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConditionalNavigationView.swift; sourceTree = "<group>"; };
 		FAB89E772EB12FA600EE4C1E /* RecipeCircle.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RecipeCircle.entitlements; sourceTree = "<group>"; };
 		FAB89E782EB1308600EE4C1E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -85,6 +87,7 @@
 				AA00000000000035 /* FavoritesView.swift */,
 				AA00000000000018 /* SearchView.swift */,
 				AA00000000000033 /* SettingsView.swift */,
+				AA00000000000036 /* ConditionalNavigationView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -222,6 +225,7 @@
 				AA00000000000019 /* ShareSheet.swift in Sources */,
 				AA00000000000030 /* CloudKitManager.swift in Sources */,
 				AA00000000000032 /* SettingsView.swift in Sources */,
+				AA00000000000037 /* ConditionalNavigationView.swift in Sources */,
 				AA00000000000001 /* RecipeCircleApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
